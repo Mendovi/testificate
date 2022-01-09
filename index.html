@@ -1,0 +1,321 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Игровая / CatWar</title><noscript><meta http-equiv="refresh" content="0; URL=/noscript"></noscript><script>var p = '663d57242fe6defcf59d84bdbc754239', s = '1600x900x24', z = '100~?', t = '7', u = 'catwar.su', c = '8e22f0dfa4dd642429859e18518aaff5', w = 'c1d4a43c8ff1fd9bdeafd575e64cd162', v = 'Google Inc. (Intel)~ANGLE (Intel, Intel(R) HD Graphics 4000 Direct3D11 vs_5_0 ps_5_0, D3D11-9.18.13.3165)', f = '2f788e677d1c273b3787b78efba9b5c6', l = 'ru-RU~ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', flag = false;</script><style>textarea {padding: 4px}</style><link rel="stylesheet" href="//e.catwar.su/css/all.css?350629802"><link rel="stylesheet" href="//e.catwar.su/css/blank.css?369768496"><link rel="stylesheet" href="//e.catwar.su/css/cw3/jquery-ui.css?268881464"><script src="//e.catwar.su/js/jquery.js?268881668"></script><script src="//e.catwar.su/js/key.js?268881668"></script><script src="//e.catwar.su/js/cw3/jquery-ui.js?268881685"></script><script src="//e.catwar.su/js/cw3/func.js?370789396"></script><script src="/js/cw3/data.php"></script><script src="//e.catwar.su/js/dist/cw3.js?370986891"></script><script src="//e.catwar.su/js/ssl.js?350630126"></script><script async src='//e.catwar.su/js/all.js?364544708'></script></head><body>
+<div id="load">Подождите, идёт загрузка Игровой... Если страница загрузилась до конца, а эта надпись не исчезла,
+проверьте, включён ли у вас JavaScript. <a href="/blog125">Этот пост</a> может вам помочь.
+</div>
+<div id="app" data-mobile="0" data-time="1641714425">
+<p id="error" @click="game.hideError"></p>
+<div id="timer"></div>
+<div id="fightPanel" :style="{display: 'none', width: (mobile ? 250 : 320) + 'px'}">
+<img src="symbole/unlock.png" id="block">
+<input type="button" class="hotkey" v-for="button in fight.buttons" :value="button.hotkey" :title="button.title">
+<div id="fightLog" :style="{height: (mobile ? 50 : 70) + 'px'}"></div>
+</div>
+<span class="small">
+<a href="/">{{ cat.pol == 0 ? 'Моя кошка' : 'Мой кот' }}</a> |
+<a href="/chat">Чат</a> <span id="newchat">{{ game.notReadChat > 0 ? '(' + game.notReadChat + ')' : '' }}</span> |
+<a href="/ls">ЛС</a> <span id="newls">{{ game.notReadMess > 0 ? '(' + game.notReadMess + ')' : '' }}</span>
+</span><br>
+<table id="main_table" style="border-spacing: 2px">
+<tr id="tr_chat">
+<td>
+<form id="chat_form" @submit="chat.send">
+<span id="txt">
+<input maxlength="255" size="50" id="text" autocomplete="off" v-if="!chat.dialogWith">
+<a href="#" @click="chat.endDialog" v-if="chat.dialogWith">X</a>
+<select id="text" v-if="chat.dialogWith" :size="Math.min(chat.dialogAnswers.length, 4)">
+<option :value="i" v-for="(answer, i) in chat.dialogAnswers">{{ answer }}</option>
+</select>
+</span>
+<input type="submit" id="msg_send" value="OK">
+<br v-if="mobile">
+<span v-show="!chat.dialogWith">
+<span id="volume"></span> <b>(правее — громче)</b>
+</span>
+</form>
+<div id="chat_msg">
+<span v-for="msg in chat.messages">
+<hr>
+<table style="width: 100%"><tr>
+<td>
+<span :class="'chat_text vlm' + msg.volume" :style="{width: (chat.width - 65) + 'px'}">
+<span v-html="msg.text"></span> - <b class="nick" :style="msg.mute ? 'font-style: italic' : ''" @click="chat.insertName">{{ (msg.wem && msg.mute) ? msg.wem : msg.login }}</b>
+<span v-if="msg.wem && !msg.mute"> => <i>{{ msg.wem }}</i></span>
+</span>
+</td>
+<td style="width: 42px">
+<a :href="'/cat' + msg.cat" title="Перейти в профиль">➝</a>&nbsp;|&nbsp;<a href="#" class="msg_report" :data-id="msg.id" :data-login="msg.login" title="Пожаловаться на нарушение ОПИ" @click="chat.report">X</a>
+</td>
+</tr></table>
+</span>
+<hr>
+<img src="/img/loading.gif" id="chat_msg_loading">
+</div>
+</td>
+</tr>
+<tr id="tr_actions">
+<td>
+<span class="title">Действия</span>
+<div id="block_deys">
+<table style="width:100%">
+<tr>
+<td style="width:70%">
+<div id="akten">
+<i v-if="cat.actionList.length < 1">Доступных действий нет.</i>
+<a href="#" v-for="act in cat.actionList" class="dey" :data-id="act.id" @click="cat.startAction(act.id)">
+<img :src="'actions/' + act.id + '.png'" :title="act.name">
+</a>
+<a href="#" data-id="flowers" style="display: none" class="specialAct"><img src="actions/flowers.png" title="Наложить травы"></a>
+<a href='jagd' data-id='hunt2' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2.png' title='Охотиться на кроликов'></a><a href='jagd' data-id='hunt3' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3.png' title='Ловить рыбу'></a><a href='jagd' data-id='hunt4' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4.png' title='Охотиться на летучих мышей'></a><a href='jagd' data-id='hunt6' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6.png' title='Охотиться на мышей'></a><a href='jagd' data-id='hunt7' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt7.png' title='Охотиться на голубей'></a><a href='jagd' data-id='hunt8' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt8.png' title='Охотиться на воробьёв'></a><a href='jagd' data-id='hunt9' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt9.png' title='Охотиться на ящериц'></a><a href='jagd' data-id='hunt10' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt10.png' title='Выслеживать дичь'></a><a href='jagd' data-id='hunt11' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt11.png' title='Выслеживать дичь'></a><a href='jagd' data-id='hunt12' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt12.png' title='Охотиться на землероек'></a><a href='jagd' data-id='hunt45' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt45.png' title='Охотиться на белок'></a><a href='jagd' data-id='hunt50' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt50.png' title='Охотиться на орлов'></a><a href='jagd' data-id='hunt88' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt88.png' title='Охотиться на мышей'></a><a href='jagd' data-id='hunt89' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt89.png' title='Охотиться на чаек'></a><a href='jagd' data-id='hunt96' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt96.png' title='Ловить рыбу'></a><a href='jagd' data-id='hunt101' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt101.png' title='Охотиться на звёздных мышей'></a><a href='jagd' data-id='hunt103' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt103.png' title='Выслеживать дичь'></a><a href='jagd' data-id='hunt185' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt185.png' title='Ловить рыбу'></a><a href='jagd' data-id='hunt191' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt191.png' title='Охотиться на мышей'></a><a href='jagd' data-id='hunt218' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt218.png' title='Добыть пропитание'></a><a href='jagd' data-id='hunt235' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt235.png' title='Охотиться на улиток'></a><a href='jagd' data-id='hunt242' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt242.png' title='Охотиться на птиц'></a><a href='jagd' data-id='hunt249' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt249.png' title='Охотиться на мышей'></a><a href='jagd' data-id='hunt453' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt453.png' title='Охотиться на летучих мышей'></a><a href='jagd' data-id='hunt461' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt461.png' title='Охотиться на ящериц'></a><a href='jagd' data-id='hunt517' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt517.png' title='Охотиться на перепёлок'></a><a href='jagd' data-id='hunt539' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt539.png' title='Охотиться на сычей'></a><a href='jagd' data-id='hunt606' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt606.png' title='Охотиться на птиц'></a><a href='jagd' data-id='hunt618' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt618.png' title='Охотиться на лесных обитателей'></a><a href='jagd' data-id='hunt641' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt641.png' title='Охотиться на лесную дичь'></a><a href='jagd' data-id='hunt648' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt648.png' title='Охотиться на пауков'></a><a href='jagd' data-id='hunt660' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt660.png' title='Охотиться на кроликов'></a><a href='jagd' data-id='hunt663' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt663.png' title='Охотиться на белочек'></a><a href='jagd' data-id='hunt666' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt666.png' title='Охотиться на тушканчиков'></a><a href='jagd' data-id='hunt669' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt669.png' title='Охотиться на хомяков'></a><a href='jagd' data-id='hunt672' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt672.png' title='Охотиться на змеек'></a><a href='jagd' data-id='hunt676' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt676.png' title='Ловить рыбу'></a><a href='jagd' data-id='hunt691' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt691.png' title='Охотиться на пятнистых куниц'></a><a href='jagd' data-id='hunt709' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt709.png' title='Ловить зверьков'></a><a href='jagd' data-id='hunt739' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt739.png' title='Охотиться на крабов'></a><a href='jagd' data-id='hunt763' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt763.png' title='Ловить морскую рыбку'></a><a href='jagd' data-id='hunt779' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt779.png' title='Охотиться на бурундуков'></a><a href='jagd' data-id='hunt791' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt791.png' title='Охотиться на грызунов и птиц'></a><a href='jagd' data-id='hunt798' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt798.png' title='Ловить рыбу'></a><a href='jagd' data-id='hunt799' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt799.png' title='Ловить рыбу'></a><a href='jagd' data-id='hunt815' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt815.png' title='Охотиться на бурундуков'></a><a href='jagd' data-id='hunt824' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt824.png' title='Охотиться на гадюк'></a><a href='jagd' data-id='hunt833' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt833.png' title='Охотиться на куликов'></a><a href='jagd' data-id='hunt842' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt842.png' title='Охотиться на полёвок'></a><a href='jagd' data-id='hunt878' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt878.png' title='Охотиться на зверьков'></a><a href='jagd' data-id='hunt887' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt887.png' title='Выслеживать дичь'></a><a href='jagd' data-id='hunt890' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt890.png' title='Выслеживать дичь'></a><a href='jagd' data-id='hunt895' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt895.png' title='Охотиться на леммингов'></a><a href='jagd' data-id='hunt904' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt904.png' title='Охотиться на подводных обитателей'></a><a href='jagd' data-id='hunt907' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt907.png' title='Выслеживать дичь'></a><a href='jagd' data-id='hunt917' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt917.png' title='Выслеживать дичь'></a><a href='jagd' data-id='hunt920' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt920.png' title='Охотиться на домашнюю птицу'></a><a href='jagd' data-id='hunt926' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt926.png' title='Зачерпнуть сырка'></a><a href='jagd' data-id='hunt950' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt950.png' title='Охотиться на ворон'></a><a href='jagd' data-id='hunt962' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt962.png' title='Ловить рыбу'></a><a href='jagd' data-id='hunt990' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt990.png' title='Резвиться и прыгать'></a><a href='jagd' data-id='hunt5460' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt5460.png' title='Резвиться и прыгать'></a><a href='jagd' data-id='hunt1024' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1024.png' title='Ловить морских жителей'></a><a href='jagd' data-id='hunt1028' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1028.png' title='Охотиться на морских обитателей'></a><a href='jagd' data-id='hunt1029' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1029.png' title='Ловить пещерных ангелов'></a><a href='jagd' data-id='hunt1050' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1050.png' title='Ловить пауков'></a><a href='jagd' data-id='hunt1068' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1068.png' title='Охота на птиц'></a><a href='jagd' data-id='hunt1076' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1076.png' title='Искать пуговицы'></a><a href='jagd' data-id='hunt1130' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1130.png' title='Охота на крыс'></a><a href='jagd' data-id='hunt1135' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1135.png' title='Охота на ворон'></a><a href='jagd' data-id='hunt1159' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1159.png' title='Охотиться на мышей'></a><a href='jagd' data-id='hunt1172' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1172.png' title='Ловить карпов кои'></a><a href='jagd' data-id='hunt1174' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1174.png' title='Охотиться на хорьков'></a><a href='jagd' data-id='hunt1176' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1176.png' title='Охотиться на белок'></a><a href='jagd' data-id='hunt1182' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1182.png' title='Охотиться на кроликов'></a><a href='jagd' data-id='hunt1221' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1221.png' title='Охотиться на сладости'></a><a href='jagd' data-id='hunt1263' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1263.png' title='Охотиться на солнечный зайцев'></a><a href='jagd' data-id='hunt1300' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1300.png' title='Охотиться на птиц'></a><a href='jagd' data-id='hunt1309' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1309.png' title='Охотиться на мышей'></a><a href='jagd' data-id='hunt1353' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1353.png' title='Ловить рыбу'></a><a href='jagd' data-id='hunt1356' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1356.png' title='Ловить сельских мышей'></a><a href='jagd' data-id='hunt1397' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1397.png' title='Охотиться на птиц'></a><a href='jagd' data-id='hunt1406' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1406.png' title='Ловить грызунов'></a><a href='jagd' data-id='hunt1410' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1410.png' title='Охотиться на пчёл'></a><a href='jagd' data-id='hunt1413' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1413.png' title='Ловить городских мышей'></a><a href='jagd' data-id='hunt1436' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1436.png' title='Охотиться на змей'></a><a href='jagd' data-id='hunt1454' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1454.png' title='Охотиться на фазанов'></a><a href='jagd' data-id='hunt1471' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1471.png' title='Охотиться на пасхальные сладости'></a><a href='jagd' data-id='hunt1518' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1518.png' title='Охотиться на почтовых голубей'></a><a href='jagd' data-id='hunt1570' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1570.png' title='Сбор ягод'></a><a href='jagd' data-id='hunt1610' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1610.png' title='Ловить насекомых'></a><a href='jagd' data-id='hunt1702' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1702.png' title='Охотиться на мышей'></a><a href='jagd' data-id='hunt1784' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1784.png' title='Охотиться на береговых птиц'></a><a href='jagd' data-id='hunt1832' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1832.png' title='Охотиться на дичь'></a><a href='jagd' data-id='hunt1835' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1835.png' title='Охотиться на хорьков'></a><a href='jagd' data-id='hunt1838' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1838.png' title='Охотиться на птиц'></a><a href='jagd' data-id='hunt1839' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1839.png' title='Охотиться на рыбу'></a><a href='jagd' data-id='hunt1879' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1879.png' title='Охотиться на птиц'></a><a href='jagd' data-id='hunt1912' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1912.png' title='Ловить помидоры'></a><a href='jagd' data-id='hunt1913' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1913.png' title='Охотиться на ящериц'></a><a href='jagd' data-id='hunt1914' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1914.png' title='Охотиться на змей'></a><a href='jagd' data-id='hunt1915' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1915.png' title='Охотиться на соловьёв'></a><a href='jagd' data-id='hunt1916' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1916.png' title='Охотиться на лягушек'></a><a href='jagd' data-id='hunt1998' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt1998.png' title='Охотиться на крыс'></a><a href='jagd' data-id='hunt2213' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2213.png' title='Охотиться на мышей'></a><a href='jagd' data-id='hunt2224' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2224.png' title='Искать мышей Фестиваля Снежинок'></a><a href='jagd' data-id='hunt2373' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2373.png' title='Охотиться на птиц'></a><a href='jagd' data-id='hunt2551' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2551.png' title='Ловить пещерных рыб'></a><a href='jagd' data-id='hunt2525' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2525.png' title='Ловить грызунов'></a><a href='jagd' data-id='hunt2581' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2581.png' title='Охотиться на речных обитателей'></a><a href='jagd' data-id='hunt2511' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2511.png' title='Ловить зверьков'></a><a href='jagd' data-id='hunt2532' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2532.png' title='Ловить траву'></a><a href='jagd' data-id='hunt2620' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2620.png' title='Охотиться на сов'></a><a href='jagd' data-id='hunt2633' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2633.png' title='Найти сладости'></a><a href='jagd' data-id='hunt2677' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2677.png' title='Охотиться на светлячков'></a><a href='jagd' data-id='hunt2688' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2688.png' title='Охотиться на музыкальные инструменты'></a><a href='jagd' data-id='hunt2795' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2795.png' title='Ловить черепах'></a><a href='jagd' data-id='hunt2798' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2798.png' title='Охотиться на змей'></a><a href='jagd' data-id='hunt2914' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2914.png' title='Пробежаться по прилавку'></a><a href='jagd' data-id='hunt2920' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2920.png' title='Пробежаться по прилавку'></a><a href='jagd' data-id='hunt2926' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2926.png' title='Пробежаться по прилавку'></a><a href='jagd' data-id='hunt2929' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2929.png' title='Пробежаться по прилавку'></a><a href='jagd' data-id='hunt2935' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt2935.png' title='Пробежаться по прилавку'></a><a href='jagd' data-id='hunt3002' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3002.png' title='Охотиться на рыбу'></a><a href='jagd' data-id='hunt3006' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3006.png' title='Охотиться на обрывок'></a><a href='jagd' data-id='hunt3007' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3007.png' title='Охотиться на обрывок'></a><a href='jagd' data-id='hunt3008' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3008.png' title='Охотиться на лягушек'></a><a href='jagd' data-id='hunt3046' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3046.png' title='Искать Духовное Яство'></a><a href='jagd' data-id='hunt3070' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3070.png' title='Охотиться на летучих мышей'></a><a href='jagd' data-id='hunt3163' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3163.png' title='Добыть мёд'></a><a href='jagd' data-id='hunt3167' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3167.png' title='Выслеживать дичь'></a><a href='jagd' data-id='hunt3190' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3190.png' title='Искать игрушки'></a><a href='jagd' data-id='hunt3301' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3301.png' title='Охотиться на орлов'></a><a href='jagd' data-id='hunt3312' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3312.png' title='Искать игрушку Пенелопы'></a><a href='jagd' data-id='hunt3316' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3316.png' title='Ловить лягушек'></a><a href='jagd' data-id='hunt3331' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3331.png' title='Охотиться на тварей'></a><a href='jagd' data-id='hunt3345' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3345.png' title='Ловить ледяную рыбу'></a><a href='jagd' data-id='hunt3435' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3435.png' title='Охотиться на пищух'></a><a href='jagd' data-id='hunt3436' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3436.png' title='Охотиться на мышей'></a><a href='jagd' data-id='hunt3503' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3503.png' title='Ловить птиц'></a><a href='jagd' data-id='hunt3512' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3512.png' title='Ловить земноводных'></a><a href='jagd' data-id='hunt3517' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3517.png' title='Ловить летучих мышей'></a><a href='jagd' data-id='hunt3521' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3521.png' title='Ловить рыбу'></a><a href='jagd' data-id='hunt3535' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3535.png' title='Собирать грибы'></a><a href='jagd' data-id='hunt3551' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3551.png' title='Схватить блин!'></a><a href='jagd' data-id='hunt3600' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3600.png' title='Искать самоцветы'></a><a href='jagd' data-id='hunt3601' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3601.png' title='Охотиться на яйца'></a><a href='jagd' data-id='hunt3602' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3602.png' title='Охотиться на куличи'></a><a href='jagd' data-id='hunt3603' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3603.png' title='Словить частичку праздника!'></a><a href='jagd' data-id='hunt3752' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3752.png' title='Ловить горных птиц'></a><a href='jagd' data-id='hunt3785' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3785.png' title='Погоня за злыми духами'></a><a href='jagd' data-id='hunt3851' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3851.png' title='Охота на агути'></a><a href='jagd' data-id='hunt3854' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3854.png' title='Охота на орехи'></a><a href='jagd' data-id='hunt3901' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3901.png' title='Ловить лягушек'></a><a href='jagd' data-id='hunt3904' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3904.png' title='Ловить синиц'></a><a href='jagd' data-id='hunt3911' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3911.png' title='Ловить насекомых'></a><a href='jagd' data-id='hunt3914' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt3914.png' title='Ловить устриц'></a><a href='jagd' data-id='hunt4195' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4195.png' title='Проверить трухлявую сосну'></a><a href='jagd' data-id='hunt4196' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4196.png' title='Проверить кусты малинника'></a><a href='jagd' data-id='hunt4197' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4197.png' title='Оглядеть туманную низменность'></a><a href='jagd' data-id='hunt4198' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4198.png' title='Охотиться на рябчика'></a><a href='jagd' data-id='hunt4199' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4199.png' title='Залезть в барсучьи норы'></a><a href='jagd' data-id='hunt4256' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4256.png' title='Охотиться на драконов'></a><a href='jagd' data-id='hunt4279' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4279.png' title='Выловить сазана'></a><a href='jagd' data-id='hunt4473' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4473.png' title='Собирать фрукты'></a><a href='jagd' data-id='hunt4482' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4482.png' title='Ловить рыбу'></a><a href='jagd' data-id='hunt4677' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4677.png' title='Охотиться на ежей'></a><a href='jagd' data-id='hunt4396' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4396.png' title='Охотиться на соек'></a><a href='jagd' data-id='hunt4009' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4009.png' title='Рыться в снегу'></a><a href='jagd' data-id='hunt4779' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4779.png' title='Охота на ягнёнка'></a><a href='jagd' data-id='hunt4789' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4789.png' title='Высматривать Крабов'></a><a href='jagd' data-id='hunt4886' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4886.png' title='Искать полезную траву'></a><a href='jagd' data-id='hunt4801' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4801.png' title='Охотиться на птиц'></a><a href='jagd' data-id='hunt4933' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4933.png' title='Ловить тропических рыбок'></a><a href='jagd' data-id='hunt4976' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4976.png' title='Ловить тропические плоды'></a><a href='jagd' data-id='hunt4993' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt4993.png' title='Ловить ручной огонёк'></a><a href='jagd' data-id='hunt5062' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt5062.png' title='Охотиться на зайцев'></a><a href='jagd' data-id='hunt5068' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt5068.png' title='Пошуршать в кустах'></a><a href='jagd' data-id='hunt5110' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt5110.png' title='Ловить души'></a><a href='jagd' data-id='hunt5116' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt5116.png' title='Сорвать спелый персик'></a><a href='jagd' data-id='hunt5213' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt5213.png' title='Охота на тропических рыб'></a><a href='jagd' data-id='hunt5216' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt5216.png' title='Ловить рыбу'></a><a href='jagd' data-id='hunt5239' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt5239.png' title='Я хочу найти...'></a><a href='jagd' data-id='hunt5622' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt5622.png' title='Ловить речную рыбу'></a><a href='jagd' data-id='hunt6300' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6300.png' title='Поохотиться на ласок'></a><a href='jagd' data-id='hunt6015' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6015.png' title='Поохотиться на ящериц'></a><a href='jagd' data-id='hunt6307' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6307.png' title='Охотиться на огненных ящерок'></a><a href='jagd' data-id='hunt6378' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6378.png' title='Охота на горные дары'></a><a href='jagd' data-id='hunt6387' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6387.png' title='тестовая охота'></a><a href='jagd' data-id='hunt6426' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6426.png' title='Догонялки с огоньками'></a><a href='jagd' data-id='hunt6461' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6461.png' title='Охота на морских змей'></a><a href='jagd' data-id='hunt6473' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6473.png' title='Добыча водорослей'></a><a href='jagd' data-id='hunt6501' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6501.png' title='Собрать плоды'></a><a href='jagd' data-id='hunt6524' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6524.png' title='Охотиться на мышей'></a><a href='jagd' data-id='hunt6545' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6545.png' title='Ловить морскую рыбу'></a><a href='jagd' data-id='hunt6546' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6546.png' title='Охотиться на морскую рыбу'></a><a href='jagd' data-id='hunt6617' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6617.png' title='Охотиться на мохнатых ящериц'></a><a href='jagd' data-id='hunt6624' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6624.png' title='Охотиться на пипчо'></a><a href='jagd' data-id='hunt6660' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6660.png' title='Резвиться и прыгать'></a><a href='jagd' data-id='hunt6675' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6675.png' title='Охота на мышек'></a><a href='jagd' data-id='hunt6779' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6779.png' title='Разворошить заросли'></a><a href='jagd' data-id='hunt6812' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6812.png' title='Охотиться на крыс'></a><a href='jagd' data-id='hunt6843' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6843.png' title='Ловить рыбу'></a><a href='jagd' data-id='hunt6855' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6855.png' title='Охотиться на пушного зверя'></a><a href='jagd' data-id='hunt6990' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt6990.png' title='Поохотиться на амадинов'></a><a href='jagd' data-id='hunt7306' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt7306.png' title='Поймать птицу'></a><a href='jagd' data-id='hunt7362' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt7362.png' title='Поиск в кустах роз'></a><a href='jagd' data-id='hunt7408' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt7408.png' title='Разыскивать жуть'></a><a href='jagd' data-id='hunt7489' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt7489.png' title='Разыскивать летучих мышей'></a><a href='jagd' data-id='hunt7490' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt7490.png' title='Поохотиться на пятнистых лягушек'></a><a href='jagd' data-id='hunt7607' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt7607.png' title='Искать в темноте'></a><a href='jagd' data-id='hunt7613' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt7613.png' title='Охотиться на воронов'></a><a href='jagd' data-id='hunt5487' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt5487.png' title='Резвиться со снежинками'></a><a href='jagd' data-id='hunt7679' class='specialAct hunt' target='_blank' style='display:none'><img src='actions/hunt7679.png' title='Охотиться на северную дичь'></a> </div>
+<div id="dein">
+<i v-if="cat.actionWithList.length < 1">Доступных действий нет.</i>
+<a href="#" v-for="act in cat.actionWithList" class="dey" :data-id="act.id" @click="cat.startAction(act.id)">
+<img :src="'actions/' + act.id + '.png'" :title="act.name">
+</a>
+<a href="#" id="dialog"><img src="actions/talk.png" title="Поболтать"></a>
+<a href="#" data-id="flowers" class="specialAct"><img src="actions/flowers.png" title="Наложить травы"></a>
+<a href="#" data-id="exchange" style="display: none" class="specialAct"><img src="actions/exchange.png" title="Обмен предметами"></a>
+</div>
+</td>
+<td>
+Действия с каким-либо котом в соседней клетке:<br>
+<select id="mit">
+<option value="0">Действия с собой</option>
+<option>Идёт загрузка...</option>
+</select><br>
+<input type="button" id="mitok" value="Показать">
+</td>
+</tr>
+</table>
+</div>
+<div id="block_mess"></div>
+</td>
+</tr>
+<tr id="tr_tos">
+<td>
+<table>
+<tr>
+<td>
+<input type="submit" v-if="field.smellMap" value="Вернуть поле" @click="field.disableSmellMode">
+<input type="submit" v-if="mobile" :value="field.isHidden ? 'Раскрыть поле' : 'Скрыть поле'" @click="field.switch">
+</td>
+<td>
+<div id="tos"></div>
+</td>
+<td>
+<a href="/time" target="_blank" id="hour"><img :src="'symbole/hours/' + weather.hour + '.png'"></a>
+</td>
+<td>
+<a href="/time" target="_blank"><img :src="'symbole/season' + weather.season + '.png'"></a>
+</td>
+<td v-if="hunt.mode">
+<img :src="'wind/' + 'left' + '.png'">
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr id="tr_sky" v-if="weather.sky > 0">
+<td>
+<div id="sky" :style="'background-image: url(//e.catwar.su/cw3/sky/' + weather.sky + '.png)'"></div>
+</td>
+</tr>
+<tr id="tr_field">
+<td id="act">
+<div id="cages_overflow" v-show="!field.isHidden">
+<div id="cages_div" :style="(field.location.bg >= 0 ? 'background-image: url(\'spacoj/' + field.location.bg + '.jpg\')' : '')">
+<table id="cages" v-if="!hunt.mode && typeof field.smellMap != 'object'">
+<tr v-for="row in field.map">
+<td v-for="cage in row" class="cage" :style="cage.style" @click="field.go(cage.x, cage.y, $event.pageX, $event.pageY)">
+<div class="cage_items" :style="cage.itemStyle">
+<span class="catWithArrow" v-if="cage.cat && !cage.move">
+<div style="position: relative" v-if="cage.cat.mode == 1 && cage.cat.smell === undefined">
+<div :id="'arrow' + cage.cat.id" :style="cage.cat.arrowStyle" :class="cage.cat.arrowClass">
+<table :style="'width: ' + (cage.cat.arrowWidth * 2) + 'px'"><tr>
+<td :style="cage.cat.arrowRed" class="arrow_red"></td>
+<td :style="cage.cat.arrowGreen" class="arrow_green"></td>
+<td :style="'width: ' + cage.cat.arrowWidth + 'px'"></td>
+</tr></table>
+</div>
+</div>
+<span class="cat">
+<cat :data="cage.cat" :style="(cage.cat.isDead ? 'opacity: 0.5' : '')" v-if="!cage.cat.wer && cage.cat.smell === undefined"></cat>
+<img :src="'things/' + cage.cat.wer + '.png'" v-if="cage.cat.wer && cage.cat.smell === undefined">
+<img :src="'/smell?clans=' + cage.cat.smell" v-if="cage.cat.smell !== undefined">
+<span class="cat_tooltip" v-if="field.smellMap != cage.cat.id">
+<u><a :href="'/cat' + cage.cat.id">{{ cage.cat.login }}</a></u><br>
+<small><i>{{ cage.cat.clan_position }}</i></small><br v-if="cage.cat.clan_position">
+<template v-if="cage.cat.items || cage.cat.taken">
+У {{ cage.cat.pol == 1 ? 'него' : 'неё' }} во рту:
+<ol class="mouth">
+<li v-for="item in cage.cat.items">
+<img :src="'things/' + item + '.png'">
+</li>
+<li v-for="taken in cage.cat.taken">
+<cat :data="taken"></cat>
+</li>
+</ol>
+</template>
+{{ cage.cat.pol == 1 ? 'Его' : 'Её' }} запах:<br>
+<img :src="'odoroj/' + cage.cat.clan + '.png'"><br>
+<span class="online" v-html="cage.cat.online"></span>
+</span>
+<span class="cat_tooltip" v-if="field.smellMap == cage.cat.id">
+Это <a :href="'/cat' + cage.cat.id">{{ cage.cat.login }}</a>.
+</span>
+</span> </span>
+<template v-if="cage.move">
+<span class="move_parent">
+<img :src="'moves/' + cage.move.location + '.png'" class="move_img">
+<span v-bind:class="{ owned: cage.move.owned, not_owned: cage.move.neutral, move_name: true }" v-html="cage.move.name"></span>
+</span> </template>
+</div>
+</td>
+</tr>
+</table>
+<table id="cages" v-if="!hunt.mode && typeof field.smellMap == 'object'">
+<tr v-for="row in field.smellMap">
+<td v-for="cage in row" class="cage" @click="field.go(cage.x, cage.y, $event.pageX, $event.pageY)">
+<img :src="'/smell?clans=' + cage.move" class="smell_move" v-if="cage.move !== undefined">
+<span class="cat" v-if="cage.cat">
+<img :src="'odoroj/' + cage.cat.clan + '.png'" :style="{height: (cage.cat.size !== undefined ? (15 * cage.cat.size + 32.5) + 'px' : '100px')}">
+<span class="cat_tooltip" v-if="cage.cat.id">
+Это <a :href="'/cat' + cage.cat.id">{{ cage.cat.login }}</a>.
+</span>
+</span>
+</td>
+</tr>
+</table>
+<div id="cages" v-if="hunt.mode" @click.stop="field.go($event.pageX, $event.pageY, $event.pageX, $event.pageY)" style="position: relative">
+<div class="catWithArrow huntEl" v-for="cat in field.cats" :style="cat.huntStyle" :id="'cat' + cat.id">
+<span class="cat">
+<cat :data="cat" :style="(cat.isDead ? 'opacity: 0.5' : '')" v-if="!cat.wer && cat.smell === undefined"></cat>
+<img :src="'things/' + cat.wer + '.png'" v-if="cat.wer && cat.smell === undefined">
+<img :src="'/smell?clans=' + cat.smell" v-if="cat.smell !== undefined">
+<span class="cat_tooltip" v-if="field.smellMap != cat.id">
+<u><a :href="'/cat' + cat.id">{{ cat.login }}</a></u><br>
+<small><i>{{ cat.clan_position }}</i></small><br v-if="cat.clan_position">
+<template v-if="cat.items || cat.taken">
+У {{ cat.pol == 1 ? 'него' : 'неё' }} во рту:
+<ol class="mouth">
+<li v-for="item in cat.items">
+<img :src="'things/' + item + '.png'">
+</li>
+<li v-for="taken in cat.taken">
+<cat :data="taken"></cat>
+</li>
+</ol>
+</template>
+{{ cat.pol == 1 ? 'Его' : 'Её' }} запах:<br>
+<img :src="'odoroj/' + cat.clan + '.png'"><br>
+<span class="online" v-html="cat.online"></span>
+</span>
+<span class="cat_tooltip" v-if="field.smellMap == cat.id">
+Это <a :href="'/cat' + cat.id">{{ cat.login }}</a>.
+</span>
+</span> </div>
+<div v-for="move in field.moves" class="huntEl" :style="{left: move.x + 'px', top: move.y + 'px'}">
+<span class="move_parent">
+<img :src="'moves/' + move.location + '.png'" class="move_img">
+<span v-bind:class="{ owned: move.owned, not_owned: move.neutral, move_name: true }" v-html="move.name"></span>
+</span> </div>
+</div>
+</div>
+</div>
+</td>
+</tr>
+<tr id="tr_mouth">
+<td>
+<span class="title">Во рту</span>
+<div id="tir">
+<table>
+<tr id="katze">
+<td v-if="item.list.length + cat.taken.length > 0">
+<ol id="itemList">
+<li v-for="now in item.list" :id="now.id" class='itemInMouth' @click="item.showActions(now)" :class="(now.isActive ? 'active_thing' : '')">
+<img :src="'things/' + now.type + '.png'">
+</li>
+<li v-for="now in cat.taken" :class="(now.isActive ? 'active_thing catrot' : 'catrot')" :id="now.id" :title="now.login" @click="cat.showActionsWithTaken(now)">
+<cat :data="now"></cat>
+</li>
+</ol>
+</td>
+<td v-if="item.list.length + cat.taken.length < 1">
+<i>Предметов нет.</i>
+</td>
+</tr>
+</table>
+</div>
+<a href="#" v-if="!item.mixMode && item.list.length + cat.taken.length > 0" @click="item.enableMixMode">Смешивать</a>
+<span v-if="item.mixMode">
+<a href="#" @click="item.mix">Смешать</a> | <a href="#" @click="item.disableMixMode">Отменить</a>
+</span><br v-if="item.list.length + cat.taken.length > 0"><br>
+<div id="thdey" style="display:none">
+<ul style="margin:0;padding:0;padding-left:1.4em">
+<li>Уникальный ID: {{ item.id }}</li>
+<li><a href="#" id="eat" @click="item.eat">{{ item.eatText }}</a></li>
+<li><a href="#" id="put">Положить на землю</a></li>
+<li>Осмотреть (<a href="#" @click="item.lookup(false)">поверхностно</a> или <a href="#" @click="item.lookup(true)">тщательно</a>)
+</li>
+<li id="divide"><a href="#" @click="item.divide">Разделить</a></li>
+<li id="chew"><a href="#" @click="item.chew">Разжевать</a></li>
+<li><a href="#" id="dig">Закопать</a></li>
+</ul>
+<br>
+<div id="layer"></div>
+<br>
+Чем правее, тем глубже будет закопан предмет. <a href="/about?id=12" target="_blank">[?]</a><br><br>
+</div>
+<div id="ctdey" style="display:none">
+<ul style="margin:0;padding:0;padding-left:1.4em">
+<li><a href="#" id="put2">Положить на землю</a></li>
+<li><a :href="'/cat' + cat.selectedTaken" target="_blank">Перейти в профиль</a></li>
+</ul>
+</div>
+</td>
+</tr>
+<tr id="tr_info">
+<td>
+<table id="info_main">
+<tr>
+<td class="infos" id="family">
+<h2><a href="#" class="toggle" id="relatives">Родственные связи</a></h2>
+<div id="relatives_block">
+<div id="family_block">
+<img src="/img/loading.gif">
+</div>
+<a href="/relatives">Генеалогический кустик</a>
+<div id="pairs">
+<img src="/img/loading.gif" style="margin-top: 5px" id="pairs-loading">
+<p v-for="pair in family.pairs">
+Вы стали парой с {{ pair.pol == 0 ? 'кошкой' : 'котом' }} по имени <a :href="'/cat' + pair.id">{{ pair.login }}</a> на <span class="pair" :data-who="pair.id">{{ pair.points / 10 }}</span>%.
+<a href="#" class="pair-delete" title="Разлюбить">х</a> <a href="#" class="adopt" title="Усыновить/удочерить кого-либо">+</a>
+</p>
+</div>
+</div>
+</td> <td class="infos" id="history">
+<h2><a href="#" class="toggle" id="history">История</a></h2>
+<div id="history_block">
+<span id="ist" v-html="cat.history"></span><br>
+<a href="#" id="history_clean" v-if="(cat.history != 'История очищена.')" @click="cat.cleanHistory">Очистить историю</a>
+<div style="background-color:white">
+Моё местонахождение: <span id="location" v-html="field.location.name"></span>
+</div>
+</div>
+</td> <td class="infos" id="parameter">
+<h2><a href="#" class="toggle" id="parameters">Параметры и навыки</a></h2>
+<div id="parameters_block">
+<div :title="'У вас ' + cat.life + ' жизней.'" id="lifes" v-if="cat.life > 1">
+<img src="symbole/life.png" v-for="n in cat.life">
+</div>
+</div>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+<p><b>Тёмные баллы (шанс попасть в Сумрачный лес после смерти):</b> <span id="black">{{ cat.black }}</span></p>
+</div>
+ <script type="text/javascript"> (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)}; m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)}) (window, document, "script", "https://cdn.jsdelivr.net/npm/yandex-metrica-watch/tag.js", "ym"); ym(6984625, "init", { clickmap:true, trackLinks:true, accurateTrackBounce:true }); </script> <noscript><div><img src="https://mc.yandex.ru/watch/6984625" style="position:absolute; left:-9999px;" alt="" /></div></noscript> 
+<div id="scroll_bottom"></div>
+</body></html>
